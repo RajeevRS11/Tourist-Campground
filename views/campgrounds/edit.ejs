@@ -23,6 +23,7 @@
       method="POST"
       novalidate
       class="needs-validation"
+      enctype="multipart/form-data"
     >
       <div class="mb-3">
         <label class="form-label" for="title">Title</label>
@@ -47,15 +48,28 @@
         />
       </div>
       <div class="mb-3">
-        <label class="form-label" for="image">Image Url</label>
+        <label for="image" class="form-label">Add Images</label>
         <input
           class="form-control"
-          type="text"
+          type="file"
+          name="image"
           id="image"
-          name="campground[image]"
-          value="<%=campground.image%>"
-          required
+          multiple
         />
+      </div>
+      <div class="mb-3">
+        <% campground.images.forEach(function(img, i) { %>
+        <img src="<%=img.thumbnail %>" class="img-thumbnail" alt="" />
+        <div class="form-check-inline">
+          <input
+            type="checkbox"
+            id="image-<%=i%> "
+            name="deleteImages[]"
+            value="<%=img.filename%> "
+          />
+        </div>
+        <label for="image-<%=i%> ">Delete?</label>
+        <% }) %>
       </div>
       <div class="mb-3">
         <label class="form-label" for="price">Campground Price</label>

@@ -2,83 +2,70 @@ const express = require('express');
 const router = express();
 const { validateCampground } = require('../middleware/validatecampground');
 const catchAsync = require('../utils/catchAsync');
-const Campground = require('../models/campground');
 const { isLoggedIn, isAuthor } = require('../middleware');
+const campControllers = require('../controllers/campgrounds');
+const multer = require('multer');
+const { storage } = require('../cloudinary/index');
+// const upload = multer({ dest: 'uploads/' });
+const upload = multer({ storage });
+const Campground = require('../models/campground');
 
-router.get('/campgrounds', async (req, res) => {
-  const campgrounds = await Campground.find({});
-  res.render('campgrounds/index', { campgrounds });
-});
+router
+  .route('/')
+  .get(catchAsync(campControllers.index))
+  .post(
+    isLoggedIn,
+    upload.array('image'),
+    validateCampground,
+    catchAsync(campControllers.createCampground)
+  );
 
-router.get('/campgrounds/new', isLoggedIn, (req, res) => {
-  res.render('campgrounds/new');
-});
+// UPLOAD MULTIPLE IMAGE
+// .post(upload.array('image'), (req, res) => {
+//   console.log(req.files);
+//   res.send('It worked');
+// });
+// UPLOAD SINGLE IMAGE
+// .post(upload.single('image'), (req, res) => {
+//   res.send(req.body, req.file);
+// });
 
-router.post(
-  '/campgrounds',
-  isLoggedIn,
-  validateCampground,
-  catchAsync(async (req, res) => {
-    const campground = new Campground(req.body.campground);
-    campground.author = req.user._id;
-    await campground.save();
-    req.flash('success', 'You have Successfully created a new campground!');
-    res.redirect(`/campgrounds/${campground.id}`);
-  })
-);
+// router.get('/', catchAsync(campControllers.index));
 
-router.get('/campgrounds/:id', async (req, res) => {
-  const { id } = req.params;
-  // const campground = await Campground.findById(id);
-  const campground = await Campground.findById(id)
-    .populate({ path: 'reviews', populate: { path: 'author' } })
-    .populate('author');
-  console.log(campground);
-  if (!campground) {
-    req.flash('error', 'Cannot found that Campground!');
-    return res.redirect('/campgrounds');
-  }
-  res.render('campgrounds/show', { campground });
-});
+// router.post(
+//   '/',
+//   isLoggedIn,
+//   validateCampground,
+//   catchAsync(campControllers.createCampground)
+// );
+
+router.get('/new', isLoggedIn, campControllers.renderNewForm);
+
+router
+  .route('/:id')
+  .get(catchAsync(campControllers.showCampground))
+  .put(
+    isLoggedIn,
+    upload.array('image'),
+    validateCampground,
+    catchAsync(campControllers.updateCampground)
+  )
+  .delete(isLoggedIn, catchAsync(campControllers.deleteCampground));
+
+// router.get('/:id', catchAsync(campControllers.showCampground));
+// router.put(
+//   '/:id',
+//   isLoggedIn,
+//   validateCampground,
+//   catchAsync(campControllers.updateCampground)
+//   );
+//   router.delete('/:id', isLoggedIn, catchAsync(campControllers.deleteCampground));
 
 router.get(
-  '/campgrounds/:id/edit',
+  '/:id/edit',
   isLoggedIn,
   isAuthor,
-  catchAsync(async (req, res) => {
-    const { id } = req.params;
-    const campground = await Campground.findById(id);
-    if (!campground) {
-      req.flash('error', 'Cannot found that Campground!');
-      return res.redirect('/campgrounds');
-    }
-    res.render('campgrounds/edit', { campground });
-  })
-);
-
-router.put(
-  '/campgrounds/:id',
-  isLoggedIn,
-  validateCampground,
-  catchAsync(async (req, res) => {
-    const { id } = req.params;
-    const campground = await Campground.findByIdAndUpdate(id, {
-      ...req.body.campground,
-    });
-    req.flash('success', 'You have successfully updated Campground!');
-    res.redirect(`/campgrounds/${campground.id}`);
-  })
-);
-
-router.delete(
-  '/campgrounds/:id',
-  isLoggedIn,
-  catchAsync(async (req, res) => {
-    const { id } = req.params;
-    await Campground.findByIdAndDelete(id);
-    req.flash('success', 'Successfully Deleted Campground!');
-    res.redirect('/campgrounds');
-  })
+  catchAsync(campControllers.editCampground)
 );
 
 module.exports = router;
