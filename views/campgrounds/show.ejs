@@ -26,9 +26,6 @@
 
 <div class="row">
   <div class="col-6">
-    <div class="card-body">
-      <div id="map" style="width: 600px; height: 300px"></div>
-    </div>
     <div
       id="campgroundCarouselControls"
       class="carousel slide"
@@ -100,6 +97,11 @@
     </div>
   </div>
   <div class="col-6">
+    <div class="card mb-3">
+      <div class="card-body">
+        <div id="map"></div>
+      </div>
+    </div>
     <% if(currentUser) { %>
     <h2>Leave a Review</h2>
     <form
@@ -207,6 +209,6 @@
 
 <script>
   const mapToken = '<%-process.env.MAPBOX_TOKEN%>';
-  const campground = <%- JSON.stringify(campground)%>;
+  const campground = <%-JSON.stringify(campground)%>;
 </script>
 <script src="/javascripts/showPageMap.js"></script>
